@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 
 export default function FloatingWhatsApp() {
-  const whatsappNumber = "919999999999"; // Default placeholder
+  const whatsappNumber = "+917774803320"; // Default placeholder
   const message = encodeURIComponent("Hello UdayJain Photography, I would like to inquire about your services.");
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${message}`;
 
