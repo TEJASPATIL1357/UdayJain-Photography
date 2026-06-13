@@ -39,6 +39,7 @@ export default function Footer() {
             <ul className="space-y-4 text-sm text-soft-gray font-light">
               <li>Datta Wadi, Chalisgaon, 424101</li>
               <li>+91 7774803320</li>
+              <li>+91 7774805800</li>
               <li>hello@udayjainphotography.com</li>
             </ul>
           </div>
