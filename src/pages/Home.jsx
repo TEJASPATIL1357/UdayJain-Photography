@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { ChevronRight, ChevronLeft } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 import { db } from '../firebase/config';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
 import { getOptimizedUrl } from '../utils/imageOptimizer';
 
 export default function Home() {
@@ -16,6 +16,11 @@ export default function Home() {
     subheadline: 'UdayJain Photography is a cinematic luxury photography studio specializing in weddings, portraits, and timeless visual storytelling.',
     buttonText: 'View Portfolio'
   });
+  
+  // About preview state
+  const [aboutData, setAboutData] = useState(null);
+  const [aboutImages, setAboutImages] = useState([]);
+  const [currentAboutSlide, setCurrentAboutSlide] = useState(0);
 
   useEffect(() => {
     const fetchHeroData = async () => {
@@ -41,7 +46,27 @@ export default function Home() {
         console.error("Error fetching data:", error);
       }
     };
+
+    const fetchAboutData = async () => {
+      try {
+        const docRef = doc(db, 'settings', 'about');
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          setAboutData(docSnap.data());
+        }
+
+        const q = query(collection(db, 'gallery'), orderBy('createdAt', 'desc'), limit(5));
+        const snap = await getDocs(q);
+        const imgs = [];
+        snap.forEach(d => imgs.push(d.data().url || d.data().thumbUrl));
+        setAboutImages(imgs);
+      } catch (error) {
+        console.error("Error fetching about preview:", error);
+      }
+    };
+
     fetchHeroData();
+    fetchAboutData();
   }, []);
 
   // Auto-advance slides
@@ -55,6 +80,15 @@ export default function Home() {
 
   const nextSlide = () => setCurrentSlide((prev) => (prev + 1) % displaySlides.length);
   const prevSlide = () => setCurrentSlide((prev) => (prev - 1 + displaySlides.length) % displaySlides.length);
+
+  // Auto-advance about preview
+  useEffect(() => {
+    if (aboutImages.length <= 1) return;
+    const timer = setInterval(() => {
+      setCurrentAboutSlide((prev) => (prev + 1) % aboutImages.length);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, [aboutImages.length]);
 
   return (
     <div className="w-full min-h-screen bg-black-main relative overflow-hidden">
@@ -154,10 +188,87 @@ export default function Home() {
         )}
       </section>
       
-      {/* Spacer for next sections */}
-      <section className="h-screen bg-black-main flex items-center justify-center">
-        <h2 className="text-4xl text-white font-playfair">About Section Coming Soon</h2>
-      </section>
+      {/* About Preview Section */}
+      {aboutData && (
+        <section className="w-full bg-black-main py-24 relative overflow-hidden">
+          <div className="container mx-auto px-6 max-w-7xl">
+            <div className="flex flex-col lg:flex-row items-center gap-16">
+              
+              {/* Left: About Text */}
+              <div className="w-full lg:w-1/2 flex flex-col justify-center">
+                <motion.h4 
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  className="text-gold tracking-[0.3em] text-sm uppercase mb-4"
+                >
+                  Our Story
+                </motion.h4>
+                
+                <motion.h2 
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.2 }}
+                  className="text-4xl md:text-5xl font-playfair text-white mb-8 leading-snug"
+                >
+                  {aboutData.aboutTitle || "Every Picture Tells a Story"}
+                </motion.h2>
+
+                <motion.p 
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.4 }}
+                  className="text-soft-gray font-light font-inter leading-relaxed text-lg mb-8 line-clamp-4 whitespace-pre-line"
+                >
+                  {aboutData.aboutStory || "Capturing emotions, memories, and moments that last forever."}
+                </motion.p>
+                
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.6 }}
+                >
+                  <Link to="/about" className="inline-flex items-center gap-2 text-gold uppercase tracking-widest text-sm font-semibold hover:text-white transition-colors group">
+                    Read Full Story <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                  </Link>
+                </motion.div>
+              </div>
+
+              {/* Right: Creative Slideshow */}
+              <div className="w-full lg:w-1/2 h-[350px] md:h-[500px] relative mt-10 lg:mt-0">
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-gold/10 blur-[100px] rounded-full pointer-events-none"></div>
+                
+                {aboutImages.length > 0 ? (
+                  <div className="w-full h-full relative rounded-2xl overflow-hidden border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
+                    <AnimatePresence mode="wait">
+                      <motion.img
+                        key={currentAboutSlide}
+                        initial={{ opacity: 0, scale: 1.05 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 1.5 }}
+                        src={getOptimizedUrl(aboutImages[currentAboutSlide], 'medium')}
+                        alt="Gallery preview"
+                        className="w-full h-full object-cover absolute inset-0"
+                      />
+                    </AnimatePresence>
+                  </div>
+                ) : (
+                   <div className="w-full h-full bg-charcoal rounded-2xl border border-white/10"></div>
+                )}
+                
+                {/* Decorative Elements */}
+                <div className="absolute -bottom-4 -left-4 md:-bottom-6 md:-left-6 w-24 h-24 md:w-32 md:h-32 border-b-2 border-l-2 border-gold/30 rounded-bl-3xl"></div>
+                <div className="absolute -top-4 -right-4 md:-top-6 md:-right-6 w-24 h-24 md:w-32 md:h-32 border-t-2 border-r-2 border-gold/30 rounded-tr-3xl"></div>
+              </div>
+
+            </div>
+          </div>
+        </section>
+      )}
 
     </div>
   );

@@ -107,7 +107,7 @@ export default function Gallery() {
                 onClick={() => setSelectedImage(img)}
               >
                 <img 
-                  src={getOptimizedUrl(img.thumbUrl || img.url || img.src, 'medium')} 
+                  src={getOptimizedUrl(img.url || img.thumbUrl || img.src, 'medium')} 
                   alt={img.title || img.category} 
                   className="w-full h-auto object-cover transition-transform duration-500 ease-out group-hover:scale-105"
                   loading="lazy"

@@ -5,6 +5,7 @@ import { Menu, X, Camera } from 'lucide-react';
 
 const navLinks = [
   { name: 'Home', path: '/' },
+  { name: 'About', path: '/about' },
   { name: 'Gallery', path: '/gallery' },
   { name: 'Services', path: '/services' },
   { name: 'Budget', path: '/budget' },

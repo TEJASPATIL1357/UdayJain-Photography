@@ -7,6 +7,7 @@ import { LayoutDashboard, Image as ImageIcon, Settings, LogOut, Type, Phone } fr
 import ManageGalleries from './components/ManageGalleries';
 import HeroContent from './components/HeroContent';
 import ManageBackgrounds from './components/ManageBackgrounds';
+import ManageAbout from './components/ManageAbout';
 
 export default function AdminDashboard() {
   const { currentUser } = useAuth();
@@ -39,6 +40,7 @@ export default function AdminDashboard() {
     { icon: ImageIcon, label: 'Manage Galleries' },
     { icon: Type, label: 'Hero Content' },
     { icon: ImageIcon, label: 'Manage Backgrounds' },
+    { icon: Type, label: 'Manage About Page' },
     { icon: Settings, label: 'Manage Services' },
     { icon: Phone, label: 'Contact Settings' },
   ];
@@ -116,8 +118,9 @@ export default function AdminDashboard() {
         )}
 
         {activeTab === 'Manage Galleries' && <ManageGalleries />}
-        {activeTab === 'Hero Content' && <HeroContent />}
-        {activeTab === 'Manage Backgrounds' && <ManageBackgrounds />}
+        { activeTab === 'Hero Content' && <HeroContent /> }
+        { activeTab === 'Manage Backgrounds' && <ManageBackgrounds /> }
+        { activeTab === 'Manage About Page' && <ManageAbout /> }
         
         {(activeTab === 'Manage Services' || activeTab === 'Contact Settings') && (
           <div className="bg-charcoal border border-white/5 rounded-xl p-8 text-center min-h-[400px] flex flex-col items-center justify-center">

@@ -102,18 +102,18 @@ export const getOptimizedUrl = (url, size = 'medium') => {
   if (!url || typeof url !== 'string') return url;
   if (!url.includes('res.cloudinary.com')) return url;
 
-  let widthParam = 'w_800';
+  let widthParam = 'w_1200';
   switch (size) {
-    case 'thumbnail': widthParam = 'w_400'; break;
-    case 'medium': widthParam = 'w_800'; break;
-    case 'hd': widthParam = 'w_1920'; break;
+    case 'thumbnail': widthParam = 'w_600'; break;
+    case 'medium': widthParam = 'w_1200'; break;
+    case 'hd': widthParam = 'w_2560'; break;
     case 'full': widthParam = ''; break;
     default:
       if (size.startsWith('w_')) widthParam = size;
       break;
   }
 
-  const transforms = `f_auto,q_auto${widthParam ? `,${widthParam}` : ''}`;
+  const transforms = `f_auto,q_auto:best${widthParam ? `,${widthParam}` : ''}`;
   const uploadIndex = url.indexOf('/upload/');
   if (uploadIndex !== -1) {
     const baseUrl = url.substring(0, uploadIndex + 8);

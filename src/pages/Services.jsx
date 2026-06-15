@@ -155,7 +155,7 @@ export default function Services() {
             );
             
             const imgDoc = match || gallery[Math.floor(Math.random() * gallery.length)];
-            const imgUrl = imgDoc ? (imgDoc.thumbUrl || imgDoc.url) : null;
+            const imgUrl = imgDoc ? (imgDoc.url || imgDoc.thumbUrl) : null;
             
             return { ...service, img: imgUrl };
           }));
