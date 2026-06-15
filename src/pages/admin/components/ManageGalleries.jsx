@@ -16,10 +16,13 @@ export default function ManageGalleries() {
   const [uploadQueue, setUploadQueue] = useState([]);
   const [isDragging, setIsDragging] = useState(false);
   const [globalCategory, setGlobalCategory] = useState('Wedding');
+  const [customCategory, setCustomCategory] = useState('');
   const [watermarkText, setWatermarkText] = useState('');
   const [uploadError, setUploadError] = useState(null);
 
-  const categories = ['Wedding', 'Pre Wedding', 'Baby Shoot', 'Outdoor Photoshoot', 'Indoor Photoshoot', 'Couple'];
+  const baseCategories = ['Wedding', 'Pre Wedding', 'Baby Shoot', 'Outdoor Photoshoot', 'Indoor Photoshoot', 'Couple'];
+  const dynamicCategories = Array.from(new Set(images.map(img => img.category))).filter(c => c && !baseCategories.includes(c));
+  const categories = [...baseCategories, ...dynamicCategories, 'Other...'];
 
   useEffect(() => {
     fetchImages();
@@ -119,11 +122,13 @@ export default function ManageGalleries() {
         // 5. Save to Firestore
         updateQueueItem(item.id, { progress: 95, status: 'saving to database' });
         
+        const finalCategory = globalCategory === 'Other...' ? (customCategory || 'Uncategorized') : globalCategory;
+        
         // Add a timeout to addDoc to prevent infinite hanging if Firebase blocks it
         const dbPromise = addDoc(collection(db, 'gallery'), {
           url: mainUrl,
           thumbUrl: thumbUrl,
-          category: globalCategory,
+          category: finalCategory,
           title: item.name,
           createdAt: serverTimestamp()
         });
@@ -215,20 +220,32 @@ export default function ManageGalleries() {
       <div className="bg-charcoal border border-white/5 p-6 rounded-xl mb-8">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
           <h3 className="text-gold text-sm tracking-widest uppercase">Bulk Upload Photos</h3>
-          <div className="flex gap-4 w-full md:w-auto">
-            <select 
-              value={globalCategory}
-              onChange={(e) => setGlobalCategory(e.target.value)}
-              className="bg-black-main border border-white/10 text-white p-2 text-sm rounded focus:border-gold outline-none"
-            >
-              {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
-            </select>
+          <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
+            <div className="flex gap-2 w-full sm:w-auto">
+              <select 
+                value={globalCategory}
+                onChange={(e) => setGlobalCategory(e.target.value)}
+                className="bg-black-main border border-white/10 text-white p-2 text-sm rounded focus:border-gold outline-none w-full sm:w-40"
+              >
+                {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+              </select>
+              {globalCategory === 'Other...' && (
+                <input 
+                  type="text" 
+                  placeholder="New Folder Name" 
+                  value={customCategory}
+                  onChange={(e) => setCustomCategory(e.target.value)}
+                  className="bg-black-main border border-gold/50 text-white p-2 text-sm rounded focus:border-gold outline-none w-full sm:w-40 transition-all"
+                  autoFocus
+                />
+              )}
+            </div>
             <input 
               type="text" 
               placeholder="Optional Watermark" 
               value={watermarkText}
               onChange={(e) => setWatermarkText(e.target.value)}
-              className="bg-black-main border border-white/10 text-white p-2 text-sm rounded focus:border-gold outline-none w-full md:w-48"
+              className="bg-black-main border border-white/10 text-white p-2 text-sm rounded focus:border-gold outline-none w-full sm:w-48"
             />
           </div>
         </div>

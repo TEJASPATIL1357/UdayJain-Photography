@@ -113,7 +113,7 @@ export const getOptimizedUrl = (url, size = 'medium') => {
       break;
   }
 
-  const transforms = `f_auto,q_auto:best${widthParam ? `,${widthParam}` : ''}`;
+  const transforms = `f_auto,q_auto${widthParam ? `,${widthParam}` : ''}`;
   const uploadIndex = url.indexOf('/upload/');
   if (uploadIndex !== -1) {
     const baseUrl = url.substring(0, uploadIndex + 8);

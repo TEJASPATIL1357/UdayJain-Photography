@@ -1,23 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { db } from '../firebase/config';
 import { collection, getDocs, doc, getDoc, query, orderBy } from 'firebase/firestore';
 import PageHero from '../components/PageHero';
 import { getOptimizedUrl } from '../utils/imageOptimizer';
-
-const categories = [
-  'All', 'Wedding', 'Pre Wedding', 'Baby Shoot', 'Outdoor', 'Indoor', 'Fashion', 'Events'
-];
+import { Folder, ArrowLeft } from 'lucide-react';
 
 export default function Gallery() {
-  const [activeCategory, setActiveCategory] = useState('All');
+  const [activeAlbum, setActiveAlbum] = useState(null);
   const [selectedImage, setSelectedImage] = useState(null);
   const [liveImages, setLiveImages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [heroData, setHeroData] = useState({
     bg: '',
     title: 'Our Masterpieces',
-    subtitle: 'A curated collection of our finest captures. Select a category below to explore.'
+    subtitle: 'A curated collection of our finest captures. Select an album below to explore.'
   });
 
   useEffect(() => {
@@ -47,7 +44,7 @@ export default function Gallery() {
           setHeroData({
             bg: data.galleryBg || '',
             title: data.galleryTitle || 'Our Masterpieces',
-            subtitle: data.gallerySubtitle || 'A curated collection of our finest captures. Select a category below to explore.'
+            subtitle: data.gallerySubtitle || 'A curated collection of our finest captures. Select an album below to explore.'
           });
         }
       } catch (error) {
@@ -57,9 +54,27 @@ export default function Gallery() {
     fetchBg();
   }, []);
 
-  const filteredImages = activeCategory === 'All' 
-    ? liveImages 
-    : liveImages.filter(img => img.category === activeCategory);
+  // Compute dynamic albums
+  const albums = useMemo(() => {
+    const map = new Map();
+    liveImages.forEach(img => {
+      const cat = img.category || 'Uncategorized';
+      if (!map.has(cat)) {
+        map.set(cat, {
+          title: cat,
+          coverImage: img.url || img.thumbUrl || img.src,
+          count: 1
+        });
+      } else {
+        map.get(cat).count += 1;
+      }
+    });
+    return Array.from(map.values());
+  }, [liveImages]);
+
+  const filteredImages = activeAlbum 
+    ? liveImages.filter(img => (img.category || 'Uncategorized') === activeAlbum)
+    : [];
 
   return (
     <div className="w-full min-h-screen pb-24 relative">
@@ -69,63 +84,115 @@ export default function Gallery() {
         bgImage={heroData.bg} 
       />
       
-      <div className="relative z-10 bg-black-main backdrop-blur-3xl rounded-t-[40px] pt-16 -mt-12 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] border-t border-white/10 min-h-screen">
+      <div className="relative z-10 bg-black-main backdrop-blur-3xl rounded-t-[40px] pt-24 -mt-12 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] border-t border-white/10 min-h-screen">
         <div className="container mx-auto px-6 max-w-7xl">
         
-        {/* Categories */}
-        <div className="flex flex-wrap justify-center gap-4 mb-16">
-          {categories.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setActiveCategory(cat)}
-              className={`px-6 py-2 rounded-full text-sm font-inter uppercase tracking-wider transition-all duration-300 ${
-                activeCategory === cat 
-                  ? 'bg-gold text-black-main font-medium' 
-                  : 'bg-white/5 text-white/70 hover:bg-white/10 hover:text-white'
-              }`}
+        <AnimatePresence mode="wait">
+          {!activeAlbum ? (
+            /* ALBUMS VIEW */
+            <motion.div 
+              key="albums-view"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8"
             >
-              {cat}
-            </button>
-          ))}
-        </div>
+              {albums.length > 0 ? albums.map((album, idx) => (
+                <motion.div 
+                  key={album.title}
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: idx * 0.1, duration: 0.5 }}
+                  onClick={() => setActiveAlbum(album.title)}
+                  className="relative group cursor-pointer aspect-[4/3] rounded-3xl overflow-hidden shadow-2xl bg-[#121212] border border-white/5 hover:border-gold/30 transition-colors"
+                >
+                  <img 
+                    src={getOptimizedUrl(album.coverImage, 'medium')} 
+                    alt={album.title}
+                    className="w-full h-full object-cover transform transition-transform duration-700 group-hover:scale-110"
+                    loading="lazy"
+                  />
+                  
+                  {/* Glassmorphism gradient overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent flex flex-col justify-end p-8">
+                    <div className="transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500 ease-out">
+                      <h3 className="text-3xl font-playfair text-white mb-2 group-hover:text-gold transition-colors">{album.title}</h3>
+                      <div className="flex items-center gap-2">
+                        <div className="h-[1px] w-8 bg-gold transition-all duration-500 group-hover:w-12"></div>
+                        <p className="text-soft-gray text-xs font-inter tracking-widest uppercase">{album.count} Photos</p>
+                      </div>
+                    </div>
+                  </div>
 
-        {/* Masonry Grid */}
-        <motion.div 
-          layout
-          className="columns-1 sm:columns-2 lg:columns-3 gap-6 space-y-6"
-        >
-          <AnimatePresence>
-            {filteredImages.map((img) => (
-              <motion.div
-                layout
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                transition={{ duration: 0.4 }}
-                key={img.id}
-                className="relative overflow-hidden group rounded-lg cursor-pointer break-inside-avoid"
-                onClick={() => setSelectedImage(img)}
-              >
-                <img 
-                  src={getOptimizedUrl(img.url || img.thumbUrl || img.src, 'medium')} 
-                  alt={img.title || img.category} 
-                  className="w-full h-auto object-cover transition-transform duration-500 ease-out group-hover:scale-105"
-                  loading="lazy"
-                />
-                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center backdrop-blur-sm">
-                  <span className="text-white font-playfair text-xl tracking-wider uppercase border border-white/30 px-6 py-3">
-                    View
-                  </span>
+                  {/* Folder Icon Overlay */}
+                  <div className="absolute top-6 right-6 bg-black/40 backdrop-blur-md p-3 rounded-full border border-white/20 opacity-0 group-hover:opacity-100 transition-all duration-500 transform scale-90 group-hover:scale-100">
+                    <Folder size={20} className="text-white" />
+                  </div>
+                </motion.div>
+              )) : !loading && (
+                <div className="col-span-full py-32 text-center text-soft-gray font-light text-xl">
+                  No albums created yet. Upload photos from the Admin panel to get started!
                 </div>
-              </motion.div>
-            ))}
-            {liveImages.length === 0 && !loading && (
-              <div className="col-span-full py-20 text-center text-soft-gray font-light">
-                No gallery images uploaded yet.
+              )}
+            </motion.div>
+          ) : (
+            /* GRID VIEW INSIDE AN ALBUM */
+            <motion.div 
+              key="grid-view"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-12 gap-6">
+                <div>
+                  <motion.h4 
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className="text-gold tracking-[0.3em] text-sm uppercase mb-2"
+                  >
+                    Album
+                  </motion.h4>
+                  <h3 className="text-4xl md:text-5xl font-playfair text-white">{activeAlbum}</h3>
+                </div>
+                
+                <button 
+                  onClick={() => setActiveAlbum(null)}
+                  className="flex items-center gap-3 px-6 py-3 rounded-full border border-white/20 text-xs font-bold tracking-widest uppercase text-white hover:bg-white hover:text-black transition-all group"
+                >
+                  <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" /> 
+                  Back to Albums
+                </button>
               </div>
-            )}
-          </AnimatePresence>
-        </motion.div>
+              
+              <div className="columns-1 sm:columns-2 lg:columns-3 gap-6 space-y-6">
+                {filteredImages.map((img, idx) => (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: idx * 0.05, duration: 0.4 }}
+                    key={img.id}
+                    className="relative overflow-hidden group rounded-xl cursor-pointer break-inside-avoid border border-white/5"
+                    onClick={() => setSelectedImage(img)}
+                  >
+                    <img 
+                      src={getOptimizedUrl(img.url || img.thumbUrl || img.src, 'medium')} 
+                      alt={img.title || img.category} 
+                      className="w-full h-auto object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                      loading="lazy"
+                    />
+                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center backdrop-blur-[2px]">
+                      <span className="text-white font-inter text-xs tracking-[0.3em] uppercase border border-white/30 px-6 py-3 hover:bg-white/10 transition-colors">
+                        Expand
+                      </span>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
       </div>
       </div>
 

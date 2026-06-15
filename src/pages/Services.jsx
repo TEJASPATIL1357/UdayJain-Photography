@@ -3,6 +3,7 @@ import { motion, useMotionTemplate, useMotionValue } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { doc, getDoc, collection, getDocs, query, orderBy } from 'firebase/firestore';
+import { db } from '../firebase/config';
 import PageHero from '../components/PageHero';
 import { getOptimizedUrl } from '../utils/imageOptimizer';
 

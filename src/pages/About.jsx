@@ -11,6 +11,7 @@ import Specialties from './about-components/Specialties';
 import BehindLens from './about-components/BehindLens';
 import Timeline from './about-components/Timeline';
 import Testimonials from './about-components/Testimonials';
+import AboutShowcase from './about-components/AboutShowcase';
 import AboutCTA from './about-components/AboutCTA';
 
 export default function About() {
