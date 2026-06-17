@@ -86,21 +86,16 @@ export default function Home() {
 
     const updateAndFetchVisitorCount = async () => {
       try {
-        const visitorRef = doc(db, 'analytics', 'visitors');
-        const docSnap = await getDoc(visitorRef);
-        if (!docSnap.exists()) {
-           await setDoc(visitorRef, { count: 1 });
-           setVisitorCount(1);
-        } else {
-           await updateDoc(visitorRef, { count: increment(1) });
-           const newSnap = await getDoc(visitorRef);
-           setVisitorCount(newSnap.data().count);
-        }
+        // Use a public free counter API to avoid Firebase permission issues
+        const res = await fetch('https://api.counterapi.dev/v1/udayjainphotography/website_visits/up');
+        const data = await res.json();
+        setVisitorCount(data.count);
       } catch (e) {
         console.error("Error updating visitors:", e);
+        setVisitorCount("..."); // Fallback
       }
     };
-
+    
     fetchHeroData();
     fetchAboutData();
     updateAndFetchVisitorCount();
