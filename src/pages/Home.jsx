@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { ChevronRight, ChevronLeft } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 import { db } from '../firebase/config';
-import { doc, getDoc, collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
+import { doc, getDoc, collection, query, orderBy, limit, getDocs, setDoc, updateDoc, increment } from 'firebase/firestore';
 import { getOptimizedUrl } from '../utils/imageOptimizer';
 
 export default function Home() {
@@ -21,6 +21,9 @@ export default function Home() {
   const [aboutData, setAboutData] = useState(null);
   const [aboutImages, setAboutImages] = useState([]);
   const [currentAboutSlide, setCurrentAboutSlide] = useState(0);
+  
+  // Visitor count state
+  const [visitorCount, setVisitorCount] = useState(0);
 
   useEffect(() => {
     const fetchHeroData = async () => {
@@ -55,18 +58,52 @@ export default function Home() {
           setAboutData(docSnap.data());
         }
 
-        const q = query(collection(db, 'gallery'), orderBy('createdAt', 'desc'), limit(5));
+        const q = query(collection(db, 'gallery'), orderBy('createdAt', 'desc'));
         const snap = await getDocs(q);
         const imgs = [];
-        snap.forEach(d => imgs.push(d.data().url || d.data().thumbUrl));
-        setAboutImages(imgs);
+        const seenUrls = new Set();
+        snap.forEach(d => {
+          const data = d.data();
+          const cat = data.category?.toLowerCase() || '';
+          const url = data.url || data.thumbUrl;
+          if (cat !== 'indoor photoshoot' && cat !== 'photo frames desgin' && !cat.includes('indoor') && !cat.includes('frame')) {
+            if (url && !seenUrls.has(url)) {
+              seenUrls.add(url);
+              imgs.push(url);
+            }
+          }
+        });
+        // Shuffle the imgs array
+        for (let i = imgs.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [imgs[i], imgs[j]] = [imgs[j], imgs[i]];
+        }
+        setAboutImages(imgs.slice(0, 5));
       } catch (error) {
         console.error("Error fetching about preview:", error);
       }
     };
 
+    const updateAndFetchVisitorCount = async () => {
+      try {
+        const visitorRef = doc(db, 'analytics', 'visitors');
+        const docSnap = await getDoc(visitorRef);
+        if (!docSnap.exists()) {
+           await setDoc(visitorRef, { count: 1 });
+           setVisitorCount(1);
+        } else {
+           await updateDoc(visitorRef, { count: increment(1) });
+           const newSnap = await getDoc(visitorRef);
+           setVisitorCount(newSnap.data().count);
+        }
+      } catch (e) {
+        console.error("Error updating visitors:", e);
+      }
+    };
+
     fetchHeroData();
     fetchAboutData();
+    updateAndFetchVisitorCount();
   }, []);
 
   // Auto-advance slides
@@ -185,6 +222,25 @@ export default function Home() {
               ))}
             </div>
           </div>
+        )}
+
+        {/* Creative Visitor Counter */}
+        {visitorCount > 0 && (
+          <motion.div 
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 1.5, duration: 1 }}
+            className="absolute bottom-8 right-8 z-30 flex items-center gap-3 bg-black/40 backdrop-blur-md border border-white/10 px-5 py-3 rounded-full shadow-[0_0_15px_rgba(212,175,55,0.15)]"
+          >
+            <div className="relative flex h-3 w-3">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-gold opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-gold"></span>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-white font-playfair text-lg leading-none">{visitorCount.toLocaleString()}</span>
+              <span className="text-gold text-[10px] uppercase tracking-widest leading-none mt-1">Total Visitors</span>
+            </div>
+          </motion.div>
         )}
       </section>
       

@@ -148,16 +148,47 @@ export default function Services() {
         const gallery = snapshot.docs.map(doc => doc.data());
         
         if (gallery.length > 0) {
+          // Deduplicate by URL
+          const uniqueGallery = [];
+          const seenUrls = new Set();
+          for (const item of gallery) {
+            const url = item.url || item.thumbUrl;
+            if (url && !seenUrls.has(url)) {
+              seenUrls.add(url);
+              uniqueGallery.push(item);
+            }
+          }
+
+          let availableGallery = uniqueGallery.filter(g => {
+            const cat = g.category?.toLowerCase() || '';
+            return cat !== 'indoor photoshoot' && cat !== 'photo frames desgin' && !cat.includes('indoor') && !cat.includes('frame');
+          });
+          if (availableGallery.length === 0) availableGallery = uniqueGallery; // Fallback
+
+          let unusedGallery = [...availableGallery];
+
           setServices(prevServices => prevServices.map((service) => {
-            const match = gallery.find(g => 
+            const match = uniqueGallery.find(g => 
               g.category && service.title.toLowerCase().includes(g.category.toLowerCase())
-            ) || gallery.find(g => 
+            ) || uniqueGallery.find(g => 
               g.category && g.category.toLowerCase().includes(service.title.split(' ')[0].toLowerCase())
             );
             
-            const imgDoc = match || gallery[Math.floor(Math.random() * gallery.length)];
+            let imgDoc = match;
+
+            // Pick an unused random image if no match
+            if (!imgDoc) {
+              if (unusedGallery.length > 0) {
+                const randIdx = Math.floor(Math.random() * unusedGallery.length);
+                imgDoc = unusedGallery[randIdx];
+                unusedGallery.splice(randIdx, 1); // remove from unused pool
+              } else {
+                // fallback if we run out of unique unused images
+                imgDoc = availableGallery[Math.floor(Math.random() * availableGallery.length)];
+              }
+            }
+
             const imgUrl = imgDoc ? (imgDoc.url || imgDoc.thumbUrl) : null;
-            
             return { ...service, img: imgUrl };
           }));
         }

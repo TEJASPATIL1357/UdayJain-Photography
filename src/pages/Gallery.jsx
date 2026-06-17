@@ -62,14 +62,22 @@ export default function Gallery() {
       if (!map.has(cat)) {
         map.set(cat, {
           title: cat,
-          coverImage: img.url || img.thumbUrl || img.src,
+          allImages: [img.url || img.thumbUrl || img.src],
           count: 1
         });
       } else {
-        map.get(cat).count += 1;
+        const entry = map.get(cat);
+        entry.count += 1;
+        entry.allImages.push(img.url || img.thumbUrl || img.src);
       }
     });
-    return Array.from(map.values());
+
+    // Pick a random cover for each album
+    return Array.from(map.values()).map(album => {
+      const randIdx = Math.floor(Math.random() * album.allImages.length);
+      album.coverImage = album.allImages[randIdx];
+      return album;
+    });
   }, [liveImages]);
 
   const filteredImages = activeAlbum 

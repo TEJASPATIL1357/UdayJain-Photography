@@ -67,10 +67,26 @@ export default function Budget() {
         const q = query(collection(db, 'gallery'), orderBy('createdAt', 'desc'));
         const snapshot = await getDocs(q);
         const images = [];
+        const seen = new Set();
         snapshot.forEach((doc) => {
-          images.push(doc.data());
+          const data = doc.data();
+          const cat = data.category?.toLowerCase() || '';
+          const url = data.url || data.thumbUrl;
+          if (cat !== 'indoor photoshoot' && cat !== 'photo frames desgin' && !cat.includes('indoor') && !cat.includes('frame')) {
+            if (url && !seen.has(url)) {
+              seen.add(url);
+              images.push(data);
+            }
+          }
         });
-        setGalleryImages(images);
+        
+        // Shuffle for DomeGallery
+        for (let i = images.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [images[i], images[j]] = [images[j], images[i]];
+        }
+        
+        setGalleryImages(images.slice(0, 35));
       } catch (error) {
         console.error("Error fetching gallery:", error);
       }

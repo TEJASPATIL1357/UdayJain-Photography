@@ -10,11 +10,27 @@ export default function AboutShowcase() {
   useEffect(() => {
     const fetchImages = async () => {
       try {
-        const q = query(collection(db, 'gallery'), orderBy('createdAt', 'desc'), limit(15));
+        const q = query(collection(db, 'gallery'), orderBy('createdAt', 'desc'));
         const snap = await getDocs(q);
         const fetched = [];
-        snap.forEach(d => fetched.push(d.data()));
-        setImages(fetched);
+        const seen = new Set();
+        snap.forEach(d => {
+          const data = d.data();
+          const cat = data.category?.toLowerCase() || '';
+          const url = data.url || data.thumbUrl;
+          if (cat !== 'indoor photoshoot' && cat !== 'photo frames desgin' && !cat.includes('indoor') && !cat.includes('frame')) {
+            if (url && !seen.has(url)) {
+              seen.add(url);
+              fetched.push(data);
+            }
+          }
+        });
+        // Shuffle the array
+        for (let i = fetched.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [fetched[i], fetched[j]] = [fetched[j], fetched[i]];
+        }
+        setImages(fetched.slice(0, 15));
       } catch (err) {
         console.error("Could not fetch showcase images", err);
       }
