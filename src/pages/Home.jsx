@@ -225,23 +225,23 @@ export default function Home() {
         )}
 
         {/* Creative Visitor Counter */}
-        {visitorCount > 0 && (
-          <motion.div 
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 1.5, duration: 1 }}
-            className="absolute bottom-8 right-8 z-30 flex items-center gap-3 bg-black/40 backdrop-blur-md border border-white/10 px-5 py-3 rounded-full shadow-[0_0_15px_rgba(212,175,55,0.15)]"
-          >
-            <div className="relative flex h-3 w-3">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-gold opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-3 w-3 bg-gold"></span>
-            </div>
-            <div className="flex flex-col">
-              <span className="text-white font-playfair text-lg leading-none">{visitorCount.toLocaleString()}</span>
-              <span className="text-gold text-[10px] uppercase tracking-widest leading-none mt-1">Total Visitors</span>
-            </div>
-          </motion.div>
-        )}
+        <motion.div 
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 1.5, duration: 1 }}
+          className="absolute bottom-8 right-8 z-30 flex items-center gap-3 bg-black/40 backdrop-blur-md border border-white/10 px-5 py-3 rounded-full shadow-[0_0_15px_rgba(212,175,55,0.15)]"
+        >
+          <div className="relative flex h-3 w-3">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-gold opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-3 w-3 bg-gold"></span>
+          </div>
+          <div className="flex flex-col">
+            <span className="text-white font-playfair text-lg leading-none">
+              {visitorCount > 0 ? visitorCount.toLocaleString() : "..."}
+            </span>
+            <span className="text-gold text-[10px] uppercase tracking-widest leading-none mt-1">Live Visitors</span>
+          </div>
+        </motion.div>
       </section>
       
       {/* About Preview Section */}
