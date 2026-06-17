@@ -239,7 +239,7 @@ export default function Home() {
             <span className="text-white font-playfair text-lg leading-none">
               {visitorCount > 0 ? visitorCount.toLocaleString() : "..."}
             </span>
-            <span className="text-gold text-[10px] uppercase tracking-widest leading-none mt-1">Live Visitors</span>
+            <span className="text-gold text-[10px] uppercase tracking-widest leading-none mt-1">Total Visitors</span>
           </div>
         </motion.div>
       </section>
