@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X, Camera } from 'lucide-react';
-
+import { doc, onSnapshot } from 'firebase/firestore';
+import { db } from '../firebase/config';
+import { getOptimizedUrl } from '../utils/imageOptimizer';
 const navLinks = [
   { name: 'Home', path: '/' },
   { name: 'About', path: '/about' },
@@ -27,23 +29,17 @@ export default function Navbar() {
     
     // Fetch sidebar background in real-time
     let unsubscribe = () => {};
-    const setupRealtimeBg = async () => {
-      try {
-        const { doc, onSnapshot } = await import('firebase/firestore');
-        const { db } = await import('../firebase/config');
-        const { getOptimizedUrl } = await import('../utils/imageOptimizer');
-        const docRef = doc(db, 'settings', 'backgrounds');
-        
-        unsubscribe = onSnapshot(docRef, (docSnap) => {
-          if (docSnap.exists() && docSnap.data().sidebarBg) {
-            setSidebarBg(getOptimizedUrl(docSnap.data().sidebarBg, 'hd'));
-          }
-        });
-      } catch (error) {
-        console.error("Error fetching sidebar bg:", error);
-      }
-    };
-    setupRealtimeBg();
+    try {
+      const docRef = doc(db, 'settings', 'backgrounds');
+      
+      unsubscribe = onSnapshot(docRef, (docSnap) => {
+        if (docSnap.exists() && docSnap.data().sidebarBg) {
+          setSidebarBg(getOptimizedUrl(docSnap.data().sidebarBg, 'hd'));
+        }
+      });
+    } catch (error) {
+      console.error("Error fetching sidebar bg:", error);
+    }
 
     return () => {
       window.removeEventListener('scroll', handleScroll);
